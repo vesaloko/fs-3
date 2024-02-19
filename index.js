@@ -87,7 +87,7 @@ let persons =[
           } else {
             response.status(404).end()
           }   })
-          .catch((error) => next(error))
+
    
 
 
