@@ -1,6 +1,36 @@
 const express = require('express')
 const app = express()
+const bodyParser = require('body-parser')
+const morgan = require('morgan')
+
+app.use(bodyParser.json())
 app.use(express.json())
+//app.use(requestLogger)
+app.use(morgan('tiny'))
+
+morgan.token('post-info', function getData(request, response)
+                {
+                    let person = {
+                        name: request.body.name, 
+                        number: request.body.number}
+                    response.send(JSON.stringify(person))
+                })
+
+
+
+                const errorHandler = (error, request, response, next) => {
+                    console.error(error.message);
+                  
+                    if (error.name === 'CastError') {
+                      return response.status(400).send({ error: 'Malformatted ID' });
+                    } else if (error.name === 'ValidationError') {
+                      return response.status(400).json({ error: error.message });
+                    }
+                  
+                    next(error);
+                  };
+                  
+                  app.use(errorHandler);
 
 
 let persons =[
@@ -26,7 +56,7 @@ let persons =[
       }
     ]
   
-    app.get('/info', (request, response) => {
+    app.get('/info', (request, response, next) => {
         const maxId = persons.length > 0
         ? Math.max(...persons.map(n => n.id)) 
         : 0
@@ -37,11 +67,14 @@ let persons =[
                     <p>${Date()}</p>
                 </div>`
             response.send(resp)
+            .catch(error => next(error))
       })
 
-      app.get('/api/persons', (request, response) => {
+      app.get('/api/persons', (request, response, next) => {
         response.json(persons)
+ 
       })
+
 
       app.get('/api/persons/:id', (request, response) => {
         const id = Number(request.params.id)
@@ -51,16 +84,20 @@ let persons =[
             response.json(person)
           } else {
             response.status(404).end()
+        
           }
       })
 
-      app.delete('/api/persons/:id', (request, response) => {
+
+      app.delete('/api/persons/:id', (request, response, next) => {
         const id = Number(request.params.id)
         persons = persons.filter(person => person.id !== id)
       
         response.status(204).end()
+        .catch(error => next(error))
       })
       
+
       const generateId = () => {
         const maxId = persons.length > 0
           ? Math.max(...persons.map(n => n.id))
@@ -68,7 +105,8 @@ let persons =[
         return maxId + 1
       }
 
-      app.post('/api/persons', (request, response) => {
+
+      app.post('/api/persons', (request, response, next) => {
         if (request.body.name === undefined || request.body.number === undefined) {
             response.status(400).json({ error: 'Missing fields in request' })
         }
@@ -83,12 +121,19 @@ let persons =[
             id: generateId(),
           }
         
-          persons = persons.concat(person)
+        persons = persons.concat(person)
         response.json(person)
       })
+
+      const unknownEndpoint = (request, response) => {
+        response.status(404).send({ error: 'unknown endpoint' })
+      }
+      
+      app.use(unknownEndpoint)
 
 
       const PORT = 3001
       app.listen(PORT, () => {
         console.log(`Server running on port ${PORT}`)
       })
+
