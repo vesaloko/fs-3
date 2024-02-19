@@ -1,8 +1,10 @@
-const mongoose = require('mongoose')
 
-mongoose.set('strictQuery', false)
+const mongoose = require('mongoose')
+const uniqueValidator = require('mongoose-unique-validator')
 
 const url = process.env.MONGODB_URI
+//mongoose.set('strictQuery', false)
+
 
 console.log('connecting to', url)
 mongoose.connect(url)
@@ -15,25 +17,9 @@ mongoose.connect(url)
 
   const personSchema = new mongoose.Schema({
     name: String,
-    number: String
+    number: String,
 })
 
-const Person = mongoose.model('Person', personSchema)
-const name = process.argv[3]
-const number = process.argv[4]
-const id = process.argv[5]
-
-
-const person = new Person({
-  name: name, 
-  number: number,
-  id: id
-})
-
-person.save().then(result => {
-console.log(process.argv[3], process.argv[4], 'to phonebook')
-mongoose.connection.close()
-})
 
 personSchema.set('toJSON', {
   transform: (document, returnedObject) => {
@@ -42,5 +28,5 @@ personSchema.set('toJSON', {
     delete returnedObject.__v
   }
 })
-
+personSchema.plugin(uniqueValidator)
 module.exports = mongoose.model('Person', personSchema)

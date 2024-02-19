@@ -4,9 +4,9 @@ const app = express()
 const bodyParser = require('body-parser')
 const morgan = require('morgan')
 
-app.use(bodyParser.json())
 app.use(express.json())
 app.use(morgan(':method :url :status :res[content-length] - :response-time ms :body'))
+morgan.token('request-body', (req) => JSON.stringify(req.body))
 app.use(express.static('dist'))
 
 const cors = require('cors')
@@ -22,7 +22,6 @@ const requestLogger = (request, response, next) => {
   };
 
   app.use(requestLogger)
-  morgan.token("body", req => JSON.stringify(req.body));
 
 const errorHandler = (error, request, response, next) => {
                     console.error(error.message);
@@ -38,97 +37,70 @@ const errorHandler = (error, request, response, next) => {
                   
                   app.use(errorHandler);
 
-///*
+
 const mongoose = require('mongoose')
 
-
-///
-let persons =[
-      { 
-        "name": "Arto Hellas", 
-        "number": "040-123456",
-        "id": 1
-      },
-      { 
-        "name": "Ada Lovelace", 
-        "number": "39-44-5323523",
-        "id": 2
-      },
-      { 
-        "name": "Dan Abramov", 
-        "number": "12-43-234345",
-        "id": 3
-      },
-      { 
-        "name": "Mary Poppendieck", 
-        "number": "39-23-6423122",
-        "id": 4
-      }
-    ]
   
     app.get('/info', (request, response, next) => {
-        const maxId = persons.length > 0
-        ? Math.max(...persons.map(n => n.id)) 
-        : 0
-
-        let resp =
-                `<div>
-                    <p>Phonebook has info for ${maxId} people</p>
-                    <p>${Date()}</p>
-                </div>`
-            response.send(resp)
-      })
-
-      app.get('/api/persons', (request, response, next) => {
-        response.json(persons)
-        .catch((error) => next(error))
-      })
-
-
-      app.get('/api/persons', (request, response) => {
-        Person.find({}).then(persons => {
-          response.json(persons)
+        Person.countDocuments({})
+        .then(count => {
+            const info = {
+                message: `Phonebook has info for ${count} people`,
+                timestamp: Date.now()
+            };
+            response.json(info);
         })
-      })
-   
+        .catch(error => next(error));
+});
 
+      app.get('/api/persons', (req, res, next) => {
+        Person.find({})
+        .then(persons => {
+            response.json(persons);
+        })
+        .catch(error => next(error));
+});
 
       app.delete('/api/persons/:id', (request, response) => {
-        const id = Number(request.params.id)
-        persons = persons.filter(person => person.id !== id)
+        Person.findByIdAndRemove(request.params.id)
+        .then(() => {
+            response.status(204).end();
+        })
+        .catch(error => next(error));
+});
       
-        response.status(204).end()
-    
-      })
-      
 
-      const generateId = () => {
-        const maxId = persons.length > 0
-          ? Math.max(...persons.map(n => n.id))
-          : 0
-        return maxId + 1
-      }
-
-
-      app.post('/api/persons', (request, response, next) => {
+      app.post('/api/persons', (request, response) => {
         if (request.body.name === undefined || request.body.number === undefined) {
             response.status(400).json({ error: 'Missing fields in request' })
         }
+        else {
+          const body = request.body
+          const person = new Person ({
+            name: body.name,
+            number:body.number
+          })
         
-        if (persons.some(person => person.name === request.body.name)) {
-            return response.status(400).json({ error: 'Name already exists in the phonebook' });
-          }
-
-          const person = {
-            name: request.body.name,
-            number: request.body.number,
-            id: generateId(),
-          }
-        
-        persons = persons.concat(person)
-        response.json(person)
-        .catch((error) => next(error))
+          person.save().then(savedPerson => {
+            response.json(savedPerson)
       })
+      .catch(error => next(error));
+    }})
+
+
+    app.put('/api/persons/:id', (request, response, next) => {
+        const body = request.body
+        const person = { 
+            name: body.name,
+             number: body.number }
+      
+        Person.findByIdAndUpdate(request.params.id, person, { new: true }, { runValidators: true })
+          .then(updatedPerson => {
+            response.json(updatedPerson)
+          })
+          .catch(error => next(error))
+      })
+      
 
       const unknownEndpoint = (request, response) => {
         response.status(404).send({ error: 'unknown endpoint' })
@@ -138,6 +110,6 @@ let persons =[
 
       const PORT = process.env.PORT
       app.listen(PORT, () => {
-        console.log(`Server running on port ${PORT}`)
+        console.log(`Server running on port ${process.env.PORT}`)
       })
 
