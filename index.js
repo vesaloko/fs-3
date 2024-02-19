@@ -1,5 +1,6 @@
 const express = require('express')
 const app = express()
+app.use(express.json())
 
 
 let persons =[
@@ -25,12 +26,32 @@ let persons =[
       }
     ]
   
-    app.get('/', (request, response) => {
-        response.send('<h1>persons!</h1>')
+    app.get('/info', (request, response) => {
+        const maxId = persons.length > 0
+        ? Math.max(...persons.map(n => n.id)) 
+        : 0
+
+        let resp =
+                `<div>
+                    <p>Phonebook has info for ${maxId} people</p>
+                    <p>${Date()}</p>
+                </div>`
+            response.send(resp)
       })
-      
+
       app.get('/api/persons', (request, response) => {
         response.json(persons)
+      })
+
+      app.get('/api/persons/:id', (request, response) => {
+        const id = Number(request.params.id)
+        const person = persons.find(person => person.id === id)
+        console.log(person)
+        if (person) {
+            response.json(person)
+          } else {
+            response.status(404).end()
+          }
       })
       
       const PORT = 3001
