@@ -5,23 +5,22 @@ const morgan = require('morgan')
 
 app.use(bodyParser.json())
 app.use(express.json())
-//app.use(requestLogger)
-app.use(morgan('tiny'))
+app.use(requestLogger)
+app.use(morgan(':method :url :status :res[content-length] - :response-time ms :body'))
 
 const cors = require('cors')
 app.use(cors())
 
-morgan.token('post-info', function getData(request, response)
-                {
-                    let person = {
-                        name: request.body.name, 
-                        number: request.body.number}
-                    response.send(JSON.stringify(person))
-                })
+const requestLogger = (request, response, next) => {
+    console.log("Method:", request.method);
+    console.log("Path:  ", request.path);
+    console.log("Body:  ", request.body);
+    console.log("---");
+    next();
+  };
+  morgan.token("body", req => JSON.stringify(req.body));
 
-
-
-                const errorHandler = (error, request, response, next) => {
+const errorHandler = (error, request, response, next) => {
                     console.error(error.message);
                   
                     if (error.name === 'CastError') {
@@ -70,12 +69,11 @@ let persons =[
                     <p>${Date()}</p>
                 </div>`
             response.send(resp)
-            .catch(error => next(error))
       })
 
       app.get('/api/persons', (request, response, next) => {
         response.json(persons)
- 
+        .catch((error) => next(error))
       })
 
 
@@ -87,17 +85,17 @@ let persons =[
             response.json(person)
           } else {
             response.status(404).end()
-        
-          }
-      })
+          }   })
+          .catch((error) => next(error))
+   
 
 
-      app.delete('/api/persons/:id', (request, response, next) => {
+      app.delete('/api/persons/:id', (request, response) => {
         const id = Number(request.params.id)
         persons = persons.filter(person => person.id !== id)
       
         response.status(204).end()
-        .catch(error => next(error))
+    
       })
       
 
@@ -126,6 +124,7 @@ let persons =[
         
         persons = persons.concat(person)
         response.json(person)
+        .catch((error) => next(error))
       })
 
       const unknownEndpoint = (request, response) => {
