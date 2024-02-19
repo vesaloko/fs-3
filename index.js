@@ -5,7 +5,6 @@ const morgan = require('morgan')
 
 app.use(bodyParser.json())
 app.use(express.json())
-app.use(requestLogger)
 app.use(morgan(':method :url :status :res[content-length] - :response-time ms :body'))
 
 const cors = require('cors')
@@ -18,6 +17,8 @@ const requestLogger = (request, response, next) => {
     console.log("---");
     next();
   };
+
+  app.use(requestLogger)
   morgan.token("body", req => JSON.stringify(req.body));
 
 const errorHandler = (error, request, response, next) => {
