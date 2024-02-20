@@ -18,6 +18,7 @@ mongoose.connect(url)
   const personSchema = new mongoose.Schema({
     name: String,
     number: String,
+    id:  mongoose.Schema.Types.ObjectId,
 })
 
 
@@ -28,5 +29,6 @@ personSchema.set('toJSON', {
     delete returnedObject.__v
   }
 })
+
 personSchema.plugin(uniqueValidator)
 module.exports = mongoose.model('Person', personSchema)
