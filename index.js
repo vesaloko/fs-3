@@ -51,25 +51,25 @@ const mongoose = require('mongoose')
             response.json(info);
         })
         .catch(error => next(error));
-});
+    });
 
-      app.get('/api/persons', (request, response, next) => {
+
+    app.get('/api/persons', (request, response, next) => {
         Person.find({})
         .then(persons => {
             response.json(persons);
         })
         .catch(error => {next(error)});
-});
+    });
 
 
-app.get('/api/persons/:id', (request, response) => {
+    app.get('/api/persons/:id', (request, response) => {
     Person.findById(request.params.id).then(person => {
         response.json(person)}
-  )})
+    )})
 
 
-
-      app.delete('/api/persons/:id', (request, response, next) => {
+    app.delete('/api/persons/:id', (request, response, next) => {
         Person.findByIdAndDelete(request.params.id)
         .then((deletedPerson) => {
             if (!deletedPerson) {
@@ -78,10 +78,10 @@ app.get('/api/persons/:id', (request, response) => {
             response.status(204).end();
         })
         .catch(error => next(error));
-});
+        });
       
 
-      app.post('/api/persons', (request, response, next) => {
+    app.post('/api/persons', (request, response, next) => {
         if (request.body.name === undefined || request.body.number === undefined) {
             response.status(400).json({ error: 'Missing fields in request' })
         }
@@ -92,18 +92,28 @@ app.get('/api/persons/:id', (request, response) => {
           newPerson.save().then(savedPerson => {
             response.json(savedPerson)
       })
-      .catch(error => {next(error)});
+        .catch(error => {next(error)});
     }})
 
-
-      const unknownEndpoint = (request, response) => {
-        response.status(404).send({ error: 'unknown endpoint' })
-      }
+    app.put('/api/persons/:id', (request, response, next) => {
+        const body = request.body
+        const opc = { new: true, runValidators: true, context: 'query' }
       
-      app.use(unknownEndpoint)
+        Person.findByIdAndUpdate(request.params.id, { number: body.number }, opc)
+          .then((savedPerson) => {
+            response.json(savedPerson)
+          })
+          .catch((error) => next(error))
+      })
+      
 
-      const PORT = process.env.PORT
+    const unknownEndpoint = (request, response) => {
+        response.status(404).send({ error: 'unknown endpoint' })}
+    app.use(unknownEndpoint)
+
+
+    const PORT = process.env.PORT
       app.listen(PORT, () => {
         console.log(`Server running on port ${process.env.PORT}`)
-      })
+    })
 

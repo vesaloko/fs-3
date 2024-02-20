@@ -16,8 +16,25 @@ mongoose.connect(url)
   })
 
   const personSchema = new mongoose.Schema({
-    name: String,
-    number: String,
+    name: {
+      type: String,
+      minlength: 3,
+      required: true,
+      unique: true
+    },
+    number: {
+      type: String,
+      minlength: 8,
+      required: true,
+      unique: true,
+      validate: {
+        validator: function(value) {
+            // koostuu kahdesta väliviivalla erotetusta osasta joissa ensimmäisessä osassa on 2 tai 3 numeroa ja toisessa osassa riittävä määrä numeroita
+            const parts = /^\d{2,3}-\d+$/;
+            return parts.test(value);
+        },
+        message: 'Invalid phone number format'}
+    },
     id:  mongoose.Schema.Types.ObjectId,
 })
 

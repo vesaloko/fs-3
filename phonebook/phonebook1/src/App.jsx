@@ -41,7 +41,7 @@ const App = () => {
       
       personService.update(person.id, {...person, number: newNumber}).then((updatedPerson) => {
         setPersons(persons.map(p => p.id !== person.id ? p :updatedPerson ))
-        notifyWith(`phon number of ${person.name} updated!`)
+        notifyWith(`phone number of ${person.name} updated!`)
       })
       .catch(() => {
         notifyWith(`${person.name} has already been removed`, 'error')
@@ -66,10 +66,12 @@ const App = () => {
       number: newNumber
     }).then(createdPerson => {
       setPersons(persons.concat(createdPerson))
-
       notifyWith(`${createdPerson.name} added!`)
-
       cleanForm()
+    })
+    .catch(error => {
+      notifyWith(`${newNumber}incorrect form of number`, 'error')
+      console.log(error.response.data)
     })
   }
 
@@ -79,6 +81,9 @@ const App = () => {
       personService.remove(person.id).then( () => {
         setPersons(persons.filter(p => p.id !== person.id))
         notifyWith(`number of ${person.name} deleted!`)
+      })
+      .catch(error => {
+        console.log(error.response.data)
       })
     }
   }
