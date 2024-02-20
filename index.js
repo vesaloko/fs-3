@@ -61,6 +61,20 @@ const mongoose = require('mongoose')
         .catch(error => {next(error)});
 });
 
+
+app.get('/api/persons/:id', (request, response, next) => {
+    Person.findById(request.params.id)
+    .then(person => {
+        if (!person) {
+            return response.status(404).json({ error: 'Person not found' });
+        }
+        response.json(person);
+    })
+    .catch(error => {next(error)});
+});
+
+
+
       app.delete('/api/persons/:id', (request, response, next) => {
         Person.findByIdAndDelete(request.params.id)
         .then((deletedPerson) => {
