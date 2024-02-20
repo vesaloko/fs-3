@@ -18,7 +18,7 @@ mongoose.connect(url)
   const personSchema = new mongoose.Schema({
     name: String,
     number: String,
-    id:  String,
+    id:  mongoose.Schema.Types.ObjectId,
 })
 
 
