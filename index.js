@@ -64,14 +64,16 @@ const mongoose = require('mongoose')
 
 app.get('/api/persons/:id', (request, response, next) => {
     Person.findById(request.params.id)
-    .then(person => {
-        if (!person) {
-            return response.status(404).json({ error: 'Person not found' });
+      .then((person) => {
+        if (person) {
+          response.json(person)
+        } else {
+          response.status(404).end()
         }
-        response.json(person);
-    })
-    .catch(error => {next(error)});
-});
+      })
+      .catch((error) => next(error))
+  })
+
 
 
       app.delete('/api/persons/:id', (request, response, next) => {
@@ -101,16 +103,16 @@ app.get('/api/persons/:id', (request, response, next) => {
     }})
 
 
-    app.put('/api/persons/:id', (request, response, next) => {
-        const { name, number } = request.body
-         const person = { name, number }
+ app.put('/api/persons/:id', (request, response, next) => {
+  const body = request.body
+  const opc = { new: true, runValidators: true, context: 'query' }
 
-         Person.findByIdAndUpdate(request.params.id, person, { new: true, runValidators: true })
-          .then(updatedPerson => {
-            response.json(updatedPerson)
-          })
-          .catch(error => {next(error)})
-      })
+  Person.findByIdAndUpdate(request.params.id, { number: body.number }, opc)
+    .then((savedPerson) => {
+      response.json(savedPerson)
+    })
+    .catch((error) => next(error))
+})
       
 
       const unknownEndpoint = (request, response) => {
